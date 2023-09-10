@@ -20,7 +20,7 @@
 
 #include "secrets.h"
 
-const char *udpAddress = "192.168.86.102";
+const char *udpAddress = "192.168.1.197";
 const int udpPort = 10000;
 
 WiFiUDP udp;
@@ -49,7 +49,7 @@ void setup()
 void loop()
 {
     static long i = 0;
-    int v0 = analogRead(A1);
+    int v0 = analogRead(A10);
     uint8_t buff[50];
     size_t len = sprintf((char *)buff, ">v1:%d i:%d<", v0, i);
     i += 1;
