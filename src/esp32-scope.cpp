@@ -6,6 +6,9 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 
+#include "wifi_setup.hpp"
+
+
 #define PICOS3_LED_DATA 18
 #define PICOS3_LED_PWR 17
 #define PICOS3_5V_PRES 33
@@ -18,46 +21,47 @@
 #define PICOS3_MISO 37
 #define PICOS3_CS 34
 
-#include "secrets.h"
-
-const char *udpAddress = "192.168.1.197";
+const char *udpAddress = "192.168.1.138"; // 197 is wilderer 
 const int udpPort = 10000;
 
 WiFiUDP udp;
 
+const char* hostname = "esp32-scope";
+
+
 void setup()
 {
     Serial.begin(115200);
-    while (!Serial)
-        delay(10);
+    //while (!Serial) delay(10);
     delay(100);
     Serial.println(__FILENAME__);
 
-    WiFi.begin(ssid, pwd);
-    while (WiFi.status() != WL_CONNECTED)
-    {
-        delay(500);
-        Serial.print(".");
-    }
-    Serial.println("");
-    Serial.print("Connected to ");
-    Serial.println(ssid);
-    Serial.print("IP address: ");
-    Serial.println(WiFi.localIP());
+    wifi_setup(hostname);
 }
 
 void loop()
 {
+    ArduinoOTA.handle();
+
     static long i = 0;
+    static unsigned long t0 = millis();
     int v0 = analogRead(A10);
     uint8_t buff[50];
     size_t len = sprintf((char *)buff, ">v1:%d i:%d<", v0, i);
     i += 1;
-    if (i > 50)
+    unsigned long t1 = millis();
+    if (t1 - t0 >= 1000)
+    {
         i = 0;
-
+        t0 = t1;
+    }
+    
     udp.beginPacket(udpAddress, udpPort);
     udp.write(buff, len);
-    udp.endPacket();
+    if (!udp.endPacket())
+    {
+        Serial.println("TxErr");
+        delay(500);
+    }
     delay(20);
 }
